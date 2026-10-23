@@ -1,0 +1,46 @@
+{
+  "291D_385D": {
+    "master_id": "MCHOSE_V9",
+   "mode": "dongle",
+    "name": "MCHOSE V9 PRO",
+    "category": "fone",
+    "manufacturer": "MCHOSE",
+    "battery_driver": "mchose",
+    "offline_on_timeout": true
+},
+  "0D8C_0343": {
+    "master_id": "MCHOSE_V9",
+    "mode": "cabo",
+    "name": "MCHOSE V9 PRO",
+    "category": "fone",
+    "manufacturer": "MCHOSE"
+  },
+  "3554_FA09": {
+    "master_id": "DARMOSHARK",
+    "mode": "dongle",
+    "name": "Mouse Darmoshark",
+    "category": "mouse",
+    "manufacturer": "Darmoshark"
+  },
+  "248A_FF30": {
+    "master_id": "AULA_F75",
+    "mode": "dongle",
+    "name": "Teclado AULA F75",
+    "category": "teclado",
+    "manufacturer": "AULA"
+  },
+  "258A_010C": {
+    "master_id": "AULA_F75",
+    "mode": "cabo",
+    "name": "Teclado AULA F75",
+    "category": "teclado",
+    "manufacturer": "AULA"
+  },
+  "046D_C52B": {
+    "master_id": "LOGITECH_MOUSE",
+    "mode": "dongle",
+    "name": "Mouse Logitech",
+    "category": "mouse",
+    "manufacturer": "Logitech"
+  }
+}

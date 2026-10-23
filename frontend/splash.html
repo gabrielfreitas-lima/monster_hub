@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0; padding: 0; height: 100vh;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      background: #0a0a0a; color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      border-radius: 12px; border: 1px solid #333;
+      overflow: hidden;
+    }
+    .logo { font-size: 40px; margin-bottom: 10px; animation: pulse 1.5s infinite; }
+    .title { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
+    .subtitle { font-size: 12px; color: #888; margin-top: 6px; }
+    .spinner {
+      width: 24px; height: 24px; border: 3px solid #333; border-top-color: #4a4aff;
+      border-radius: 50%; animation: spin 1s linear infinite; margin-top: 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  </style>
+</head>
+<body>
+  <div class="logo">🖥️</div>
+  <div class="title">Peripheral Monitor</div>
+  <div class="subtitle">Iniciando serviços...</div>
+  <div class="spinner"></div>
+</body>
+</html>

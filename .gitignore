@@ -1,0 +1,24 @@
+# Ambientes Virtuais
+venv/
+env/
+.venv/
+
+# Compilados Python
+__pycache__/
+*.pyc
+backend/build/
+backend/dist/
+*.spec
+
+# Logs e Caches locais
+*.log
+backend/bt_categorias.json
+backend/historico_perifericos.json
+
+# Node / Electron
+node_modules/
+frontend/dist/
+
+# Arquivos de Sistema
+.DS_Store
+Thumbs.db

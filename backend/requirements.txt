@@ -1,0 +1,7 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+wmi==1.5.1
+pywin32==306
+bleak==0.22.3
+hidapi==0.14.0
+pydantic==2.9.2

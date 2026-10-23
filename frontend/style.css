@@ -1,0 +1,215 @@
+/* --- TEMAS (Variáveis) --- */
+
+/* Tema Padrão: Escuro */
+:root {
+  --bg-body: #0a0a0a; --bg-card: #1a1a1a; --bg-btn: #2a2a2a;
+  --border-color: #333333; --text-main: #ffffff; --text-muted: #888888;
+  --accent: #ffffff; --hover: #222222; --titlebar-bg: #141414;
+  --close-hover: #e81123;
+}
+
+/* Tema Claro (Cinza) */
+body.light-mode {
+  --bg-body: #e5e5e5; --bg-card: #f5f5f5; --bg-btn: #d4d4d4;
+  --border-color: #cccccc; --text-main: #1a1a1a; --text-muted: #666666;
+  --accent: #1a1a1a; --hover: #e0e0e0; --titlebar-bg: #d8d8d8;
+  --close-hover: #e81123;
+}
+
+/* Tema Creme e Roxo (Página Creme, Cards Roxos) */
+body.cream-purple-mode {
+  --bg-body: #fdf6e3;       /* Fundo Creme (Página) */
+  --bg-card: #1e1b4b;       /* Card Roxo Escuro (Azul Marinho) */
+  --bg-btn: #e8dcca;        /* Botões em tom creme mais escuro */
+  --border-color: #d4c5a9;  /* Bordas suaves para o fundo claro */
+  --text-main: #1e1b4b;     /* Texto principal escuro (para o fundo creme) */
+  --text-muted: #7a6e8a;    /* Texto secundário */
+  --accent: #e3a04b;        /* Laranja/Creme de destaque */
+  --hover: #f5ebd0;         /* Efeito hover no fundo creme */
+  --titlebar-bg: #f5ebd0;
+  --close-hover: #e81123;
+}
+
+/* --- Regras Específicas para o Tema Creme e Roxo --- */
+
+body.cream-purple-mode .card {
+  color: #fdf6e3;
+  border-color: #2d2a5e;
+}
+
+body.cream-purple-mode .card-details {
+  color: #a5a1c9;
+}
+
+body.cream-purple-mode .settings-menu {
+  background: #1e1b4b;
+  border-color: #2d2a5e;
+  color: #fdf6e3;
+}
+
+body.cream-purple-mode .settings-menu h3 {
+  border-bottom-color: #2d2a5e;
+}
+
+body.cream-purple-mode .settings-menu select {
+  background: #2d2a5e;
+  color: #fdf6e3;
+  border-color: #3b3875;
+}
+
+body.cream-purple-mode .nav-dropdown-content {
+  background: #1e1b4b;
+  border-color: #2d2a5e;
+}
+
+body.cream-purple-mode .nav-option {
+  color: #a5a1c9;
+}
+
+body.cream-purple-mode .nav-option:hover {
+  background: #2d2a5e;
+  color: #fdf6e3;
+}
+
+body.cream-purple-mode .btn-refresh {
+  background: #2d2a5e;
+  color: #fdf6e3;
+}
+
+body.cream-purple-mode .btn-refresh:hover {
+  background: #3b3875;
+}
+
+body.cream-purple-mode::-webkit-scrollbar-track {
+  background: #fdf6e3;
+}
+body.cream-purple-mode::-webkit-scrollbar-thumb {
+  background: #d4c5a9;
+}
+
+/* --- ESTILOS GLOBAIS --- */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; user-select: none; }
+body { background: var(--bg-body); color: var(--text-main); overflow: hidden; display: flex; flex-direction: column; height: 100vh; transition: background 0.3s, color 0.3s; }
+
+/* Barra de rolagem adaptável ao tema */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-body); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* --- BARRA DE TÍTULO --- */
+.titlebar {
+  height: 32px; background: var(--titlebar-bg); display: flex; justify-content: space-between; align-items: center; -webkit-app-region: drag;
+  transition: background 0.3s;
+}
+.titlebar-drag { flex: 1; display: flex; align-items: center; padding-left: 12px; }
+.app-title { 
+  font-size: 11px; 
+  font-weight: 800; 
+  color: var(--text-main); 
+  text-transform: uppercase; 
+  letter-spacing: 1px; 
+}
+.titlebar-controls { display: flex; height: 100%; -webkit-app-region: no-drag; }
+
+/* Botões da Janela e Ícones do Topo */
+.win-btn, .icon-btn {
+  background: transparent; border: none; color: var(--text-main);
+  display: flex; justify-content: center; align-items: center;
+  cursor: pointer; transition: background 0.1s;
+  font-family: 'Segoe Fluent Icons', 'Segoe MDL2 Assets', sans-serif;
+}
+.win-btn { width: 46px; height: 100%; font-size: 10px; }
+.icon-btn { width: 40px; height: 100%; font-size: 14px; }
+.win-btn:hover, .icon-btn:hover { background: var(--hover); }
+.win-btn.close:hover { background: var(--close-hover); color: white; }
+.divider { width: 1px; background: var(--border-color); margin: 8px 0; }
+
+/* --- NAVEGAÇÃO SUSPENSA --- */
+.app-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+header { margin-bottom: 20px; display: flex; align-items: center; }
+.nav-dropdown { position: relative; display: inline-block; padding-bottom: 10px; }
+.nav-active { font-size: 24px; font-weight: 600; color: var(--text-main); cursor: default; letter-spacing: -0.5px; }
+.nav-dropdown-content {
+  display: none; position: absolute; top: 100%; left: 0;
+  background: var(--bg-card); min-width: 160px; box-shadow: 0px 8px 16px rgba(0,0,0,0.5);
+  border: 1px solid var(--border-color); border-radius: 8px; z-index: 10; overflow: hidden;
+}
+.nav-dropdown:hover .nav-dropdown-content { display: block; }
+.nav-option { font-size: 16px; font-weight: 600; color: var(--text-muted); padding: 12px 16px; cursor: pointer; transition: all 0.2s; }
+.nav-option:hover { background: var(--hover); color: var(--text-main); }
+
+/* --- GRID E CARDS --- */
+#grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
+.card { 
+  background: var(--bg-card); 
+  border: 1px solid var(--border-color); 
+  border-radius: 20px; 
+  padding: 24px; 
+  display: flex; 
+  flex-direction: column; 
+  aspect-ratio: 1 / 1; 
+  transition: 0.3s; 
+}
+.card:hover { transform: translateY(-2px); border-color: var(--text-muted); }
+.card-image-container { flex: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+.card-image-container img { max-width: 100%; max-height: 120px; object-fit: contain; }
+
+/* ATUALIZAÇÃO DOS ÍCONES AQUI */
+.emoji-icon { 
+  font-size: 76px; 
+  font-family: 'Segoe Fluent Icons', 'Segoe MDL2 Assets', sans-serif;
+  color: inherit; /* Faz o ícone herdar a cor do texto (branco, preto, etc) */
+}
+
+.card-info { display: flex; flex-direction: column; gap: 8px; }
+.card-title { font-size: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-details { display: flex; align-items: center; gap: 16px; color: var(--text-muted); font-size: 14px; font-weight: 500; }
+
+/* ÍCONES PEQUENOS NOS DETALHES (Cabo, Bateria, Bluetooth) */
+.detail-item { display: flex; align-items: center; gap: 6px; }
+.detail-item span { 
+  font-family: 'Segoe Fluent Icons', 'Segoe MDL2 Assets', sans-serif; 
+  font-size: 16px; 
+}
+
+.status-off { opacity: 0.5; }
+.empty-msg { color: var(--text-muted); font-size: 14px; font-style: italic; }
+
+/* --- MENU DE CONFIGURAÇÕES --- */
+.settings-menu {
+  position: absolute; top: 40px; right: 56px;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: 12px; padding: 16px; width: 220px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 100;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.settings-menu.hidden { opacity: 0; pointer-events: none; transform: translateY(-5px); }
+.settings-menu h3 { font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+.setting-item { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.setting-item select { padding: 6px; background: var(--bg-btn); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; outline: none; }
+
+/* --- HISTÓRICO E NOVIDADES --- */
+.card.memoria { opacity: 0.6; }
+.badge-novo { background: var(--accent); color: var(--bg-body); font-size: 10px; padding: 2px 6px; border-radius: 6px; margin-left: 6px; font-weight: bold; vertical-align: middle;}
+.ultima { color: var(--text-muted); font-size: 12px; margin-top: 6px; }
+
+/* --- ANIMAÇÃO DO BOTÃO DE ATUALIZAR --- */
+@keyframes girar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Classe que será adicionada via JS para girar o ícone */
+#refresh.girando {
+  animation: girar 1s linear infinite;
+  pointer-events: none; /* Evita que o usuário clique várias vezes sem querer */
+  opacity: 0.7;         /* Dá um feedback visual de que está "ocupado" */
+  transform: none !important; /* Impede o conflito com o :active */
+}
+
+/* Mantém aquele efeito de girar ao clicar */
+#refresh:active {
+  transform: rotate(180deg);
+  transition: transform 0.3s;
+}

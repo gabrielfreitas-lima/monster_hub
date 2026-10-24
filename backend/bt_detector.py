@@ -259,6 +259,7 @@ async def get_bt_devices() -> list[dict]:
     for d in devices.values():
         resultado.append({
             "name": d["name"],
+            "master_id": f"BT_{d['mac'].replace(':', '')}",
             "type": "Bluetooth",
             "connection": "📶 Bluetooth",
             "battery": d.get("battery") if d["connected"] else None,

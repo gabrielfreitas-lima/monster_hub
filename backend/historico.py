@@ -27,28 +27,26 @@ def aplicar_historico(lista_atual: list[dict]) -> list[dict]:
     agora = datetime.now(timezone.utc)
     resultado = []
     
-    # IDs vistos na execução atual para não duplicar no final
     vistos_agora = set()
 
     for dev in lista_atual:
-        chave = dev["name"]
+        # CORREÇÃO: Usa o master_id (único) em vez do nome (que pode colidir)
+        chave = dev.get("master_id") or dev["name"]
         vistos_agora.add(chave)
 
         is_novo = False
         if chave not in hist:
-            # Primeira vez que vemos esse aparelho
             is_novo = True
             hist[chave] = {
                 "ultima_conexao": agora.isoformat(),
                 "novo": True,
-                "visto_em": agora.isoformat()
+                "visto_em": agora.isoformat(),
+                "nome": dev["name"] # Guarda o nome bonito
             }
         else:
-            # Aparelho já conhecido: atualiza a última conexão
             if dev["connected"]:
                 hist[chave]["ultima_conexao"] = agora.isoformat()
             
-            # O selo "NOVO" dura 2 minutos a partir do momento em que foi visto pela primeira vez
             data_visto = datetime.fromisoformat(hist[chave]["visto_em"])
             if (agora - data_visto) > timedelta(minutes=2):
                 hist[chave]["novo"] = False
@@ -63,13 +61,12 @@ def aplicar_historico(lista_atual: list[dict]) -> list[dict]:
     # Adiciona aparelhos que estão no histórico mas não foram vistos agora
     for chave, dados in hist.items():
         if chave not in vistos_agora:
-            # Limpa aparelhos inativos há mais de 90 dias
             data_ultima = datetime.fromisoformat(dados["ultima_conexao"])
             if (agora - data_ultima) > timedelta(days=90):
                 continue
                 
             resultado.append({
-                "name": chave,
+                "name": dados.get("nome", chave), # Usa o nome salvo, ou a chave como fallback
                 "type": "Desconhecido",
                 "connection": "Desconectado",
                 "battery": None,

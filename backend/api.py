@@ -44,9 +44,28 @@ def _e_cabo(d: dict) -> bool:
     return d.get("mode") == "cabo" or "Cabo" in (d.get("connection") or "")
 
 def merge_devices(lista_completa, bt_devices=None):
+    # 1. Cria o dicionário do catálogo (Nome -> master_id)
+    nome_para_master = {}
+    for k, info in KNOWN_DEVICES.items():
+        if "name" in info and "master_id" in info:
+            nome_para_master[info["name"].lower().strip()] = info["master_id"]
+
     grupos = {}
     for dev in lista_completa:
-        chave = dev.get("master_id") or get_base_name(dev["name"])
+        # CORREÇÃO DO CLAUDE: Invertemos a ordem de prioridade!
+        
+        # 1. Prioridade: O catálogo conhece esse nome?
+        nome_dev = (dev.get("name") or "").lower().strip()
+        chave = nome_para_master.get(nome_dev)
+        
+        # 2. Senão, usa o master_id que o detector gerou (vid_pid, BT_mac, etc.)
+        if not chave:
+            chave = dev.get("master_id")
+            
+        # 3. Último recurso: nome limpo
+        if not chave:
+            chave = get_base_name(dev["name"])
+            
         grupos.setdefault(chave, []).append(dev)
 
     mesclados = []
@@ -54,7 +73,6 @@ def merge_devices(lista_completa, bt_devices=None):
         cabos = [d for d in devs if _e_cabo(d)]
 
         if cabos:
-            # ---- CABO TEM PRIORIDADE ----
             item = cabos[0].copy()
             item["connection"] = "🔌 USB (Cabo)"
             item["connected"] = any(d.get("connected") for d in cabos)
@@ -69,30 +87,26 @@ def merge_devices(lista_completa, bt_devices=None):
                 (d["battery"] for d in devs if d.get("battery") is not None), None
             )
         else:
-            # ---- SEM CABO (Wireless/Bluetooth) ----
             item = devs[0].copy()
-            item["connected"] = False  # Assume desconectado até que se prove o contrário
+            item["connected"] = False
             driver_timeout = False
 
             for dev in devs:
                 if dev.get("battery") is not None:
                     item["battery"] = dev["battery"]
                 
-                # 1. Se o driver de bateria deu timeout (ex: fone desligado), anota.
                 if dev.get("battery_driver") and not dev.get("connected"):
                     driver_timeout = True
-                
-                # 2. Se qualquer outra interface (ex: receptor USB) estiver ativa, marca conectado.
                 elif dev.get("connected"):
                     item["connected"] = True
 
                 if dev.get("type") in FONTES_DERIVADAS | {"Wireless"}:
                     item["type"] = dev["type"]
                     item["icon"] = dev["icon"]
+                    
                 if dev["connection"] not in item["connection"]:
                     item["connection"] += f" + {_sem_emoji(dev['connection'])}"
 
-            # 3. A PALAVRA FINAL: Se o driver de bateria deu timeout, ele está desconectado.
             if driver_timeout:
                 item["connected"] = False
 
@@ -105,13 +119,19 @@ def merge_devices(lista_completa, bt_devices=None):
         mesclados.append(item)
 
     if bt_devices:
+        # OTIMIZAÇÃO: Constrói os dicionários UMA VEZ SÓ antes do loop
+        bt_por_id = {d.get("master_id"): d for d in bt_devices if d.get("master_id")}
         bt_por_nome = {get_base_name(d["name"]): d for d in bt_devices}
+
         for item in mesclados:
             if item.get("mode") == "cabo":
                 continue
-            bt = bt_por_nome.get(get_base_name(item["name"]))
+            
+            # Usa o ID (se existir) ou cai pro Nome
+            bt = bt_por_id.get(item.get("master_id")) or bt_por_nome.get(get_base_name(item["name"]))
             if not bt:
                 continue
+                
             item["category"] = bt.get("category")
             item["connected"] = bt["connected"] or item["_real"]
             if not item["connected"]:

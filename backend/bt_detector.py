@@ -1,15 +1,6 @@
 """
 bt_detector.py
 Especialista em dispositivos Bluetooth no Windows.
-
-NOTAS PARA O TIME DE DESENVOLVIMENTO:
-1. Por que WinRT e não WMI? O WMI é instável e lento para Bluetooth no Windows. O WinRT 
-   (usado via bibliotecas 'winrt' do Python) é a API oficial da Microsoft para rádio e Bluetooth.
-2. Como lemos a bateria? Dispositivos BLE (Low Energy) usam GATT via 'bleak'. Dispositivos Clássicos 
-   (como fones A2DP) não expõem a bateria facilmente, então usamos um script PowerShell 
-   para ler a propriedade do Windows ({104EA319-...}).
-3. Cache de categorias: Se o fone estiver desligado, o Windows não sabe se é fone ou mouse. 
-   Salvamos a categoria em 'bt_categorias.json' para lembrar na próxima vez.
 """
 
 import asyncio
@@ -38,10 +29,6 @@ GENERICAS = {"bluetooth", "genérico", "generico", "desconhecido", "outro"}
 # Utilitários Básicos
 # --------------------------------------------------------------------------
 async def is_bluetooth_enabled() -> bool:
-    """
-    Verifica rapidamente se o rádio Bluetooth está ligado.
-    Se estiver desligado, o app abre instantaneamente (pula o escaneamento).
-    """
     try:
         radios = await Radio.get_radios_async()
         for radio in radios:
@@ -52,31 +39,18 @@ async def is_bluetooth_enabled() -> bool:
         return False
     return False
 
-def extract_mac(device_id: str) -> str | None:
-    """Extrai o MAC real de um InstanceId do Windows."""
-    m = (
-        re.search(r"DEV_([0-9A-Fa-f]{12})", device_id)
-        or re.search(r"&([0-9A-Fa-f]{12})_C", device_id)
-    )
-    if not m:
-        return None
-    h = m.group(1).upper()
-    return ":".join(h[i:i + 2] for i in range(0, 12, 2))
-
 def _addr_to_mac(address: int) -> str:
-    """Converte o endereço numérico do WinRT para o formato MAC padrão (AA:BB:CC:DD:EE:FF)."""
     h = f"{address:012X}"
     return ":".join(h[i:i + 2] for i in range(0, 12, 2))
 
 def _appearance_raw(dev: BluetoothLEDevice) -> int | None:
-    """Lê o 'Appearance' (tipo do dispositivo) do BLE sem crashar o app se falhar."""
     try:
         return dev.appearance.raw_value
     except Exception:
         return None
 
 # --------------------------------------------------------------------------
-# Memória de Categorias (Para quando o dispositivo estiver desligado)
+# Memória de Categorias
 # --------------------------------------------------------------------------
 CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bt_categorias.json")
 
@@ -95,9 +69,6 @@ def _salvar_cache(cache: dict) -> None:
         print(f"Não foi possível salvar o cache de categorias: {e}")
 
 def _resolver_categorias(devices: dict) -> None:
-    """
-    Se a categoria veio vaga (ex: aparelho desligado), busca do cache usando o MAC.
-    """
     cache = _carregar_cache()
     mudou = False
     for mac, d in devices.items():
@@ -106,17 +77,15 @@ def _resolver_categorias(devices: dict) -> None:
             if lembrada and lembrada not in GENERICAS:
                 d["category"] = lembrada
         elif cache.get(mac) != d["category"]:
-            # Atualiza o cache com a nova categoria descoberta
             cache[mac] = d["category"]
             mudou = True
     if mudou:
         _salvar_cache(cache)
 
 # --------------------------------------------------------------------------
-# Leitura de Bateria (BLE via Bleak e Clássico via PowerShell)
+# Leitura de Bateria (A Grande Melhoria baseada no estudo_bateria.py)
 # --------------------------------------------------------------------------
 async def read_battery_ble(address: str) -> int | None:
-    """Lê a bateria de dispositivos BLE usando o protocolo GATT padrão."""
     try:
         async with BleakClient(address, timeout=3.0) as client:
             data = await client.read_gatt_char(BATTERY_UUID)
@@ -124,29 +93,44 @@ async def read_battery_ble(address: str) -> int | None:
     except Exception:
         return None
 
-# Script PowerShell que varre o registro do Windows em busca da bateria de fones clássicos
+# O script PowerShell agora busca o MAC em QUALQUER nó PnP, não só na classe Bluetooth.
 _PS_BATTERY = r"""
-$ErrorActionPreference = 'SilentlyContinue'
-$key = '{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2'
-$res = @{}
-Get-PnpDevice -Class Bluetooth | ForEach-Object {
-    $mac = $null
-    if ($_.InstanceId -match 'DEV_([0-9A-Fa-f]{12})') { $mac = $matches[1].ToUpper() }
-    elseif ($_.InstanceId -match '&([0-9A-Fa-f]{12})_C') { $mac = $matches[1].ToUpper() }
-    if ($mac) {
-        $p = Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName $key
-        if ($p -and $p.Data -ne $null -and $p.Type -ne 'Empty') {
-            $res[$mac] = [int]$p.Data
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$chave = '{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2'
+$macs = @(__MACS__)
+
+# Lista todos os dispositivos presentes no PC inteiro
+$todos = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue
+
+$saida = @()
+foreach ($mac in $macs) {
+    # Busca em qualquer nó que contenha o MAC
+    foreach ($no in ($todos | Where-Object { $_.InstanceId -like "*$mac*" })) {
+        $p = Get-PnpDeviceProperty -InstanceId $no.InstanceId -KeyName $chave -ErrorAction SilentlyContinue
+        if ($p -and $null -ne $p.Data) {
+            try {
+                $valor = [int]$p.Data
+                if ($valor -ge 0 -and $valor -le 100) {
+                    $saida += [PSCustomObject]@{ Mac = $mac; Bateria = $valor }
+                    break
+                }
+            } catch { }
         }
     }
 }
-if ($res.Count -gt 0) { $res | ConvertTo-Json -Compress } else { '{}' }
+if ($saida.Count -gt 0) { ConvertTo-Json -InputObject @($saida) }
 """
 
-def _battery_classic_map_sync() -> dict[str, int]:
+def _battery_classic_map_sync(macs_limpos: list[str]) -> dict[str, int]:
+    if not macs_limpos:
+        return {}
+        
+    lista_ps = ",".join(f"'{m}'" for m in macs_limpos)
+    script = _PS_BATTERY.replace("__MACS__", lista_ps)
+    
     try:
         result = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", _PS_BATTERY],
+            ["powershell", "-NoProfile", "-Command", script],
             capture_output=True, text=True, timeout=15,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
@@ -154,25 +138,28 @@ def _battery_classic_map_sync() -> dict[str, int]:
         if not out: return {}
         
         raw = json.loads(out)
+        if isinstance(raw, dict): raw = [raw]
+        
         mapa = {}
-        for hex_mac, valor in raw.items():
-            mac = ":".join(hex_mac[i:i + 2] for i in range(0, 12, 2))
-            if 0 <= int(valor) <= 100:
-                mapa[mac] = int(valor)
+        for item in raw:
+            mac_limpo = item["Mac"]
+            # Recoloca os dois pontos para o formato padrão do Python
+            mac_formatado = ":".join(mac_limpo[i:i + 2] for i in range(0, 12, 2))
+            mapa[mac_formatado] = int(item["Bateria"])
         return mapa
     except Exception as e:
         print(f"Erro ao ler bateria clássica via PowerShell: {e}")
         return {}
 
-async def read_battery_classic_map() -> dict[str, int]:
-    # Roda o PowerShell numa thread separada para não travar o servidor web
-    return await asyncio.to_thread(_battery_classic_map_sync)
+async def read_battery_classic_map(macs: list[str]) -> dict[str, int]:
+    # Remove os dois pontos para a busca no Windows
+    macs_limpos = [m.replace(":", "") for m in macs]
+    return await asyncio.to_thread(_battery_classic_map_sync, macs_limpos)
 
 # --------------------------------------------------------------------------
-# Enumeração de Dispositivos (WinRT)
+# Enumeração de Dispositivos
 # --------------------------------------------------------------------------
 async def _enumerar_classicos(devices: dict) -> None:
-    """Busca dispositivos Bluetooth Clássicos (Áudio, etc) pareados."""
     try:
         sel = BluetoothDevice.get_device_selector_from_pairing_state(True)
         infos = await DeviceInformation.find_all_async_aqs_filter(sel)
@@ -190,14 +177,12 @@ async def _enumerar_classicos(devices: dict) -> None:
                     "mac": mac,
                 }
                 
-                # PROTEÇÃO: Se o BLE já adicionou, mescla em vez de sobrescrever
                 if mac in devices:
                     devices[mac]["connected"] = devices[mac]["connected"] or novo["connected"]
                     if devices[mac]["category"] in GENERICAS:
                         devices[mac]["category"] = novo["category"]
                 else:
                     devices[mac] = novo
-                    
                 dev.close()
             except Exception as e:
                 print(f"Erro ao ler dispositivo clássico {info.id}: {e}")
@@ -205,7 +190,6 @@ async def _enumerar_classicos(devices: dict) -> None:
         print(f"[BT] Falha ao listar dispositivos clássicos: {e}")
 
 async def _enumerar_ble(devices: dict) -> None:
-    """Busca dispositivos Bluetooth Low Energy (BLE) pareados."""
     try:
         sel = BluetoothLEDevice.get_device_selector_from_pairing_state(True)
         infos = await DeviceInformation.find_all_async_aqs_filter(sel)
@@ -218,7 +202,6 @@ async def _enumerar_ble(devices: dict) -> None:
                 connected = dev.connection_status == BluetoothConnectionStatus.CONNECTED
 
                 if mac in devices:
-                    # Se o mesmo aparelho aparecer no clássico e no BLE, mescla as informações
                     devices[mac]["connected"] = devices[mac]["connected"] or connected
                     devices[mac]["is_ble"] = True
                 else:
@@ -239,24 +222,18 @@ async def _enumerar_ble(devices: dict) -> None:
 # Função Principal
 # --------------------------------------------------------------------------
 async def get_bt_devices() -> list[dict]:
-    """Função que o api.py chama para pegar todos os dispositivos Bluetooth."""
-    
-    # 1. Checagem rápida: Se o Bluetooth estiver desligado, economiza 5 segundos de espera!
     if not await is_bluetooth_enabled():
         return []
 
     devices: dict[str, dict] = {}
 
-    # 2. Enumera Clássico e BLE em PARALELO (Muito mais rápido)
     await asyncio.gather(
         _enumerar_classicos(devices),
         _enumerar_ble(devices)
     )
     
-    # 3. Resolve categorias (usa o cache se necessário)
     _resolver_categorias(devices)
 
-    # 4. Limpa nomes genéricos que o Windows às vezes coloca
     devices = {
         mac: d for mac, d in devices.items()
         if d["name"] not in ("Periférico Genérico", "Desconhecido")
@@ -264,19 +241,20 @@ async def get_bt_devices() -> list[dict]:
 
     conectados = {mac: d for mac, d in devices.items() if d["connected"]}
 
-    # 5. Busca a bateria (Apenas para os conectados)
-    battery_map = await read_battery_classic_map() if conectados else {}
+    # 5. Busca a bateria passando os MACs conectados (Novo método)
+    macs_conectados = list(conectados.keys())
+    battery_map = await read_battery_classic_map(macs_conectados)
+    
     for mac, d in conectados.items():
         d["battery"] = battery_map.get(mac)
 
-    # 6. Se algum dispositivo BLE conectado ainda não tiver bateria, tenta via GATT
+    # 6. Plano B: Se o Windows não deu a bateria, tenta via BLE (GATT)
     async def _ble_battery(d: dict):
         if d.get("battery") is None and d["is_ble"]:
             d["battery"] = await read_battery_ble(d["mac"])
 
     await asyncio.gather(*(_ble_battery(d) for d in conectados.values()))
 
-    # 7. Monta o dicionário final no formato padrão que o Frontend e o api.py esperam
     resultado = []
     for d in devices.values():
         resultado.append({
@@ -284,20 +262,17 @@ async def get_bt_devices() -> list[dict]:
             "type": "Bluetooth",
             "connection": "📶 Bluetooth",
             "battery": d.get("battery") if d["connected"] else None,
-            "vendor_id": None, # Bluetooth não usa VID/PID
+            "vendor_id": None,
             "product_id": None,
-            "icon": "", # O Frontend resolve isso no JS
+            "icon": "",
             "connected": d["connected"],
             "category": d["category"],
         })
 
-    # Ordena para colocar os conectados primeiro
     resultado.sort(key=lambda x: (not x["connected"], x["name"].lower()))
     return resultado
 
-
 if __name__ == "__main__":
-    # Bloco de teste: Executar 'python bt_detector.py' diretamente no terminal
     if isinstance(sys.stdout, io.TextIOWrapper):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         

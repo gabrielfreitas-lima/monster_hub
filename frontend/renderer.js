@@ -1,46 +1,23 @@
 /**
  * renderer.js
- * Controla a interface do usuário (UI), temas, traduções, histórico e renderização.
  */
-
-// --- 1. CONSTANTES E DICIONÁRIOS ---
 
 const translations = {
   pt: {
-    nav_connected: "CONECTADOS",
-    nav_off: "OFF",
-    settings_title: "Configurações",
-    language_label: "Idioma",
-    theme_label: "Tema",
-    theme_dark: "🌙 Escuro",
-    theme_light: "☁️ Claro (Cinza)",
-    theme_cream: "🍦 Creme e Roxo",
-    searching: "Buscando periféricos...",
-    empty_connected: "Nenhum periférico conectado.",
-    empty_off: "Nenhum periférico desconectado.",
-    error_backend: "Erro: Verifique se o backend está rodando!",
-    cable: "Cabo",
-    no_battery: "Sem bateria",
-    last_seen: "Última conexão:",
-    new_badge: "NOVO"
+    nav_connected: "CONECTADOS", nav_off: "OFF",
+    settings_title: "Configurações", language_label: "Idioma", theme_label: "Tema",
+    theme_dark: "🌙 Escuro", theme_light: "☁️ Claro (Cinza)", theme_cream: "🍦 Creme e Roxo",
+    searching: "Buscando periféricos...", empty_connected: "Nenhum periférico conectado.",
+    empty_off: "Nenhum periférico desconectado.", error_backend: "Erro: Verifique se o backend está rodando!",
+    cable: "Cabo", no_battery: "Sem bateria", last_seen: "Última conexão:", new_badge: "NOVO"
   },
   en: {
-    nav_connected: "CONNECTED",
-    nav_off: "OFF",
-    settings_title: "Settings",
-    language_label: "Language",
-    theme_label: "Theme",
-    theme_dark: "🌙 Dark",
-    theme_light: "☁️ Light (Gray)",
-    theme_cream: "🍦 Cream & Purple",
-    searching: "Searching for peripherals...",
-    empty_connected: "No peripherals connected.",
-    empty_off: "No peripherals disconnected.",
-    error_backend: "Error: Check if the backend is running!",
-    cable: "Cable",
-    no_battery: "No battery",
-    last_seen: "Last connection:",
-    new_badge: "NEW"
+    nav_connected: "CONNECTED", nav_off: "OFF",
+    settings_title: "Settings", language_label: "Language", theme_label: "Theme",
+    theme_dark: "🌙 Dark", theme_light: "☁️ Light (Gray)", theme_cream: "🍦 Cream & Purple",
+    searching: "Searching for peripherals...", empty_connected: "No peripherals connected.",
+    empty_off: "No peripherals disconnected.", error_backend: "Error: Check if the backend is running!",
+    cable: "Cable", no_battery: "No battery", last_seen: "Last connection:", new_badge: "NEW"
   }
 };
 
@@ -59,15 +36,12 @@ const KEYWORDS = [
   { cat: "audio", words: ["caixa de som", "speaker", "alto-falantes"] }
 ];
 
-// --- 2. ESTADO DA APLICAÇÃO ---
 let currentView = "connected";
 let listaCompleta = []; 
 const savedLang = localStorage.getItem("lang");
 const systemLang = navigator.language.toLowerCase().startsWith("pt") ? "pt" : "en";
 const currentLang = savedLang || systemLang;
 let carregando = false;
-
-// --- 3. FUNÇÕES DE LÓGICA E UI ---
 
 function applyLanguage() {
   document.querySelectorAll("[data-i18n]").forEach(el => {
@@ -116,20 +90,18 @@ function getConnectionIcon(connection) {
 function renderCard(p) {
   const icon = getDeviceIcon(p);
   
-  // =========================================================================
-  // REGRAS DE EXIBIÇÃO ESPECÍFICAS
-  // =========================================================================
   const nomeLower = (p.name || "").toLowerCase();
-  
-  // 1. Darmoshark: Não tem bateria lida e queremos esconder a conexão
   const isDarmoshark = nomeLower.includes("darmoshark");
   
-  // 2. Caixas de Som / Alexa: Não têm bateria (são de tomada)
-  const isCaixaDeSom = p.category === "caixa de som" || p.category === "audio" || nomeLower.includes("echo") || nomeLower.includes("alexa");
+  // Caixas de Som FIXAS: Alexa, Echo, Soundbar (NÃO fones JBL)
+  const palavrasCaixaFixa = ["echo", "alexa", "speaker", "soundbar", "homepod", "boombox"];
+  const isCaixaDeSomFixa = palavrasCaixaFixa.some(w => nomeLower.includes(w));
 
-  const esconderBateria = isDarmoshark || isCaixaDeSom;
+  // REGRA DE OURO PARA O JBL: Nunca esconder a bateria de um JBL
+  const isJBL = nomeLower.includes("jbl");
+
+  const esconderBateria = isDarmoshark || (isCaixaDeSomFixa && !isJBL);
   const esconderConexao = isDarmoshark;
-  // =========================================================================
 
   const connIcon = getConnectionIcon(p.connection || "");
   
@@ -137,7 +109,6 @@ function renderCard(p) {
   if (p.connection && p.connection.includes("Bluetooth")) connText = "Bluetooth";
   if (p.connection && p.connection.includes("Wireless")) connText = "2.4G";
 
-  // Monta o HTML da Bateria
   let batteryHtml = "";
   if (!esconderBateria) {
     if (p.battery != null) {
@@ -147,17 +118,11 @@ function renderCard(p) {
     }
   }
 
-  // Monta o HTML da Conexão
   let connectionHtml = "";
   if (!esconderConexao) {
-    connectionHtml = `
-      <div class="detail-item">
-        <span>${connIcon}</span> ${connText}
-      </div>
-    `;
+    connectionHtml = `<div class="detail-item"><span>${connIcon}</span> ${connText}</div>`;
   }
 
-  // Lógica de Histórico e Novidade
   const statusClass = p.connected ? "" : "status-off";
   const memoriaClass = p.memoria ? "memoria" : "";
   const novoHtml = p.novo ? `<span class="badge-novo">${translations[currentLang].new_badge}</span>` : "";
@@ -188,7 +153,6 @@ async function load(silencioso = false) {
   const grid = document.getElementById("grid");
   const btnRefresh = document.getElementById("refresh");
   
-  // Só gira o botão se NÃO for um auto-refresh silencioso
   if (!silencioso) {
     btnRefresh.classList.add("girando");
     if (listaCompleta.length === 0) {
@@ -207,7 +171,7 @@ async function load(silencioso = false) {
     }
   } finally {
     carregando = false;
-    btnRefresh.classList.remove("girando"); // Para a animação
+    btnRefresh.classList.remove("girando");
     if (window.api && window.api.appReady) window.api.appReady();
   }
 }
@@ -226,8 +190,6 @@ function renderizar() {
     grid.innerHTML = `<p class="empty-msg">${msg}</p>`;
   }
 }
-
-// --- 4. EVENTOS E INICIALIZAÇÃO ---
 
 document.getElementById("language-select").addEventListener("change", (e) => {
   localStorage.setItem("lang", e.target.value);

@@ -1,8 +1,8 @@
-```markdown
 # MONSTER HUB 🖥️🖱️🎧🎮
 
 [![Versão Pré-Alpha](https://img.shields.io/github/v/release/gabrielfreitas-lima/monster_hub?include_prereleases&style=for-the-badge&label=Baixar%20Versão)](https://github.com/gabrielfreitas-lima/monster_hub/releases)
 
+```markdown
 > **Status do Projeto:** 🚧 **v0.1.3 (Pré-Alpha)** 🚧
 > Esta é a terceira versão do aplicativo. O foco continua sendo o mapeamento e suporte dos periféricos utilizados pelo autor (Darmoshark M3, AULA F75, MCHOSE V9 PRO, JBL TUNE520BT e GameSir Cyclone 2). Novos dispositivos serão adicionados nas próximas atualizações.
 

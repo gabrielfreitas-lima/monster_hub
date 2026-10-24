@@ -1,0 +1,9 @@
+{
+  "3537_1053": { "name": "Controle GameSir (Cabo)", "category": "controle" },
+  "3537_100B": {
+    "name": "GameSir Cyclone 2",
+    "category": "controle",
+    "connection": "📡 Wireless 2.4GHz"
+},
+  "3537_0575": { "name": "Controle GameSir (Aguardando)", "category": "controle" }
+}

@@ -42,5 +42,12 @@
     "name": "Mouse Logitech",
     "category": "mouse",
     "manufacturer": "Logitech"
+  },
+  "3537_100B": {
+    "name": "GameSir Cyclone 2",
+    "master_id": "GAMEPAD_3537_100B",
+    "mode": "dongle",
+    "category": "controle",
+    "battery_driver": "gamesir"
   }
 }

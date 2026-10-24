@@ -125,7 +125,47 @@ def read_mchose(dev) -> BatteryReading:
     except Exception as e:
         print(f"[MCHOSE] Erro: {e}")
         return BatteryReading(responding=False)
+    
+# --------------------------------------------------------------------------
+# Driver: GameSir (Cyclone 2)
+# --------------------------------------------------------------------------
+GAMESIR_CMD = bytes([0x0F, 0xF2, 0x00] + [0x00] * 61) # 64 bytes totais
 
+@register("gamesir")
+def read_gamesir(dev) -> BatteryReading:
+    try:
+        _drenar(dev)
+        
+        # O GameSir pode precisar de até 3 tentativas para acordar e mandar o dado real
+        for tentativa in range(3):
+            n = dev.write(GAMESIR_CMD)
+            if n < 0:
+                erro = dev.error() if hasattr(dev, "error") else ""
+                print(f"[GameSir] write falhou: {erro}")
+                return BatteryReading(responding=False)
+            
+            limite = time.monotonic() + 0.3
+            while time.monotonic() < limite:
+                resp = bytes(dev.read(64, 100))
+                if not resp:
+                    continue
+                
+                # Report ID do status do GameSir
+                if resp[0] == 0x12:
+                    pct = resp[36]
+                    # Se pct for 0, pode ser o chip acordando. Tentamos de novo.
+                    if pct > 0 or tentativa == 2:
+                        # Byte 35 é o status de carga (1 ou mais = carregando)
+                        charging = bool(resp[35]) if resp[35] < 255 else None
+                        return BatteryReading(percent=pct, charging=charging)
+            
+            time.sleep(0.05) 
+            
+        return BatteryReading(responding=False)
+        
+    except Exception as e:
+        print(f"[GameSir] Erro: {e}")
+        return BatteryReading(responding=False)
 
 # Driver Logitech NÃO registrado de propósito: os bytes do código anterior
 # ([0x10, 0xFF, 0x07, ...]) não parecem uma consulta HID++ válida (consulta de registrador

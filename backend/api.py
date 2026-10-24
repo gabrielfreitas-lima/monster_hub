@@ -11,7 +11,7 @@ from historico import aplicar_historico
 from usb_detector import get_usb_devices, get_base_name, KNOWN_DEVICES
 from bt_detector import get_bt_devices
 from hid_battery import get_wireless_devices
-from gamepad_detector import get_gamepads
+from gamepad_detector import get_gamepads, KNOWN_GAMEPADS
 
 app = FastAPI(title="MONSTER HUB API", version="0.1.2")
 
@@ -52,17 +52,12 @@ def merge_devices(lista_completa, bt_devices=None):
 
     grupos = {}
     for dev in lista_completa:
-        # CORREÇÃO DO CLAUDE: Invertemos a ordem de prioridade!
-        
-        # 1. Prioridade: O catálogo conhece esse nome?
         nome_dev = (dev.get("name") or "").lower().strip()
         chave = nome_para_master.get(nome_dev)
         
-        # 2. Senão, usa o master_id que o detector gerou (vid_pid, BT_mac, etc.)
         if not chave:
             chave = dev.get("master_id")
             
-        # 3. Último recurso: nome limpo
         if not chave:
             chave = get_base_name(dev["name"])
             
@@ -116,10 +111,13 @@ def merge_devices(lista_completa, bt_devices=None):
             and "Bluetooth" not in (d.get("connection") or "")
             for d in devs
         )
+        
+        # 👇 A NOVA FLAG: Salva se o driver de bateria falhou (offline)
+        item["_offline_driver"] = any(d.get("battery_driver") and not d.get("connected") for d in devs)
+        
         mesclados.append(item)
 
     if bt_devices:
-        # OTIMIZAÇÃO: Constrói os dicionários UMA VEZ SÓ antes do loop
         bt_por_id = {d.get("master_id"): d for d in bt_devices if d.get("master_id")}
         bt_por_nome = {get_base_name(d["name"]): d for d in bt_devices}
 
@@ -127,7 +125,12 @@ def merge_devices(lista_completa, bt_devices=None):
             if item.get("mode") == "cabo":
                 continue
             
-            # Usa o ID (se existir) ou cai pro Nome
+            # 👇 SE O DRIVER FALHOU, IGNORA O BLUETOOTH E FORÇA DESCONECTADO
+            if item.get("_offline_driver"):
+                item["connected"] = False
+                item["battery"] = None
+                continue # Pula a mesclagem com BT
+            
             bt = bt_por_id.get(item.get("master_id")) or bt_por_nome.get(get_base_name(item["name"]))
             if not bt:
                 continue
@@ -141,9 +144,15 @@ def merge_devices(lista_completa, bt_devices=None):
 
     for item in mesclados:
         item.pop("_real", None)
+        item.pop("_offline_driver", None) # Limpa a flag temporária
 
-    lixo = {"AURA LED Controller", "Periférico Genérico", "Desconhecido"}
-    return [i for i in mesclados if i["name"] not in lixo]
+    lixo = {
+        "AURA LED Controller", "Periférico Genérico", "Desconhecido",
+        "Teclado (Genérico)", "Mouse (Genérico)"
+    }
+    
+    # Filtra o lixo E os dispositivos que tiveram timeout no driver de bateria
+    return [i for i in mesclados if i["name"] not in lixo and not (i.get("battery_driver") and i.get("connected") is False)]
 
 @app.get("/peripherals", response_model=list[Peripheral])
 async def peripherals():
@@ -176,7 +185,54 @@ async def peripherals():
         return 4
 
     todos_mesclados.sort(key=ordem_conexao)
-    return aplicar_historico(todos_mesclados)
+    
+    # 1. Aplica o histórico
+    com_historico = aplicar_historico(todos_mesclados)
+    
+    # 2. 👇 A CORREÇÃO GERAL ANTI-FANTASMA (V3) 👇
+    # Junta todos os bancos de dados em um só para facilitar a busca
+    todos_os_dbs = {**KNOWN_DEVICES, **KNOWN_GAMEPADS}
+    
+    for item in com_historico:
+        vid = item.get("vendor_id")
+        pid = item.get("product_id")
+        
+        db_info = None
+        
+        # Tentativa 1: Buscar por VID e PID (se existirem)
+        if vid and pid:
+            db_info = todos_os_dbs.get(f"{vid}_{pid}")
+            
+        # Tentativa 2: Se não achou (ou se VID/PID são null), buscar pelo NOME
+        if not db_info:
+            nome_item = item.get("name", "").lower().strip()
+            for k, v in todos_os_dbs.items():
+                if v.get("name", "").lower().strip() == nome_item:
+                    db_info = v
+                    break
+        
+        # Se encontramos o dispositivo no JSON, aplicamos a verdade
+        if db_info:
+            item["name"] = db_info.get("name", item["name"])
+            item["category"] = db_info.get("category", item.get("category", "outro"))
+            
+            # Só corrigimos a conexão se ele estiver offline
+            if not item.get("connected"):
+                modo = db_info.get("mode")
+                conexao_json = db_info.get("connection")
+                
+                if modo == "dongle":
+                    item["connection"] = "📡 Wireless 2.4GHz"
+                    item["type"] = "Wireless"
+                elif modo == "cabo":
+                    item["connection"] = "🔌 USB (Cabo)"
+                    item["type"] = db_info.get("category", "Controle").capitalize()
+                elif conexao_json:
+                    item["connection"] = conexao_json
+                    
+    # 👆 FIM DA CORREÇÃO GERAL V3 👆
+
+    return com_historico
 
 @app.get("/health")
 def health():

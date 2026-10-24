@@ -1,3 +1,4 @@
+```markdown
 # MONSTER HUB 🖥️🖱️🎧
 
 > **Status do Projeto:** 🚧 **v0.1.1 (Pré-Alpha)** 🚧
@@ -38,3 +39,37 @@ python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
 python -m uvicorn api:app --reload
+```
+O servidor rodará em `http://127.0.0.1:8000`.
+
+### 2. Frontend (Terminal 2)
+```bash
+cd frontend
+npm install
+npm start
+```
+
+---
+
+## 📦 Como gerar o executável (.exe final)
+
+### 1. Compilar o Backend (PyInstaller)
+Sempre que alterar arquivos Python, você precisa recompilar:
+```bash
+cd backend
+Remove-Item -Recurse -Force dist, build
+pyinstaller --noconfirm --onedir --windowed --clean --name "backend" --hidden-import gamepad_detector --hidden-import pygame --hidden-import uvicorn.logging --hidden-import winrt.windows.devices.radios servidor.py
+```
+
+### 2. Compilar o Frontend (Electron Builder)
+Sempre que alterar o visual ou empacotar uma nova versão:
+```bash
+cd frontend
+npm run build
+```
+O instalador final será gerado dentro da pasta `frontend/dist`.
+
+---
+
+## 👨‍💻 Desenvolvido por:
+Gabriel Freitas ([@gabrielfreitas-lima](https://github.com/gabrielfreitas-lima))

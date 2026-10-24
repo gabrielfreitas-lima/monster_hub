@@ -1,7 +1,7 @@
 ```markdown
 # MONSTER HUB 🖥️🖱️🎧
 
-> **Status do Projeto:** 🚧 **v0.1.1 (Pré-Alpha)** 🚧
+> **Status do Projeto:** 🚧 **v0.1.2 (Pré-Alpha)** 🚧
 > Esta é a segunda versão do aplicativo. O foco continua sendo o mapeamento e suporte dos periféricos utilizados pelo autor (Darmoshark M3, AULA F75, MCHOSE V9 PRO e JBL TUNE520BT). Novos dispositivos serão adicionados nas próximas atualizações.
 
 Um aplicativo desktop minimalista para monitorar a conexão e a bateria de periféricos (USB, Bluetooth e Wireless 2.4GHz) no Windows.

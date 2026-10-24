@@ -1,6 +1,6 @@
 {
   "name": "monster-hub",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -13,20 +13,24 @@
   "allowScripts": {
     "electron@33.4.11": true
   },
-    "build": {
+  "build": {
     "appId": "com.mapeamentovid.monsterhub",
     "productName": "MONSTER HUB",
     "directories": {
       "output": "dist"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
     },
     "extraResources": [
       {

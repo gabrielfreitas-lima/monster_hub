@@ -33,6 +33,7 @@ def test_multiple_controllers():
             
             # Tenta ler alguns pacotes, pois o primeiro pode vir zerado
             battery_encontrada = None
+            charging = 0 
             for tentativa in range(5):
                 h.write(heartbeat)
                 data = h.read(64, 300) # 300ms

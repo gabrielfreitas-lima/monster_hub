@@ -317,7 +317,7 @@ def get_wireless_devices() -> list[dict]:
 # --------------------------------------------------------------------------
 if __name__ == "__main__":
     try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace") # type: ignore
     except Exception:
         pass
 

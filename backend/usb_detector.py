@@ -8,14 +8,16 @@ import hid
 
 from device_classifier import classificar, rotulo
 
+# 👇 CORREÇÃO 1: Caminho absoluto para o log (evita erro de permissão no Program Files)
+DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
 logging.basicConfig(
-    filename='usb_detector_debug.log',
+    filename=os.path.join(DIRETORIO_ATUAL, 'usb_detector_debug.log'),
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     encoding='utf-8'
 )
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "known_devices.json")
+DB_PATH = os.path.join(DIRETORIO_ATUAL, "known_devices.json")
 try:
     with open(DB_PATH, "r", encoding="utf-8") as f:
         KNOWN_DEVICES = json.load(f)
@@ -53,7 +55,8 @@ def get_base_name(name: str) -> str:
     return name.strip(" -_")
 
 def get_usb_devices() -> list[dict]:
-    print(f"[USB_DETECTOR] Iniciando leitura. PID={os.getpid()}", flush=True)
+    # 👇 CORREÇÃO 2: print() trocado por logging.info() para não crashar no --windowed
+    logging.info(f"[USB_DETECTOR] Iniciando leitura. PID={os.getpid()}")
     pythoncom.CoInitialize()
     try:
         c = wmi.WMI()
@@ -91,8 +94,6 @@ def get_usb_devices() -> list[dict]:
             vid, pid = extract_ids(dev)
             
             # --- FILTRO ANTI-GAMEPAD ---
-            # Se o VID for de um controle conhecido (GameSir, Xbox, Sony, etc),
-            # ignora no USB (o gamepad_detector.py vai cuidar dele).
             VIDS_GAMEPADS = {"3537", "045E", "054C", "057E", "2DC8"}
             if vid and vid.upper() in VIDS_GAMEPADS:
                 continue
@@ -169,8 +170,6 @@ def get_usb_devices() -> list[dict]:
                 }
 
         # ===== PARTE 2: FALLBACK HID =====
-        # Roda APÓS o WMI terminar de listar tudo. Se o WMI falhou em achar algum,
-        # o hid vai lá no barramento e adiciona.
         try:
             for d in hid.enumerate():
                 vid = f"{d['vendor_id']:04X}"
@@ -181,7 +180,6 @@ def get_usb_devices() -> list[dict]:
                     db_info = KNOWN_DEVICES[device_key]
                     master_id = db_info.get("master_id", device_key)
                     
-                    # Se o WMI já encontrou, não faz nada
                     if master_id not in agrupados:
                         mode = db_info.get("mode", "dongle")
                         conexao = "📡 Wireless 2.4GHz" if mode == "dongle" else "🔌 USB (Cabo)"
@@ -201,9 +199,10 @@ def get_usb_devices() -> list[dict]:
                             "category": db_info.get("category", "periferico")
                         }
         except Exception as e:
-            print(f"[USB_DETECTOR] Erro no fallback HID: {e}")
+            logging.error(f"[USB_DETECTOR] Erro no fallback HID: {e}") # 👈 print() trocado por logging.error()
 
-        print(f"[USB_DETECTOR] Finalizado. Dispositivos encontrados: {len(agrupados)}.", flush=True)
+        # 👇 CORREÇÃO 2: print() trocado por logging.info()
+        logging.info(f"[USB_DETECTOR] Finalizado. Dispositivos encontrados: {len(agrupados)}.")
         return list(agrupados.values())
     finally:
         pythoncom.CoUninitialize()

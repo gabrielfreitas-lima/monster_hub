@@ -6,15 +6,25 @@ const translations = {
   pt: {
     nav_connected: "CONECTADOS", nav_off: "OFF",
     settings_title: "Configurações", language_label: "Idioma", theme_label: "Tema",
-    theme_dark: "🌙 Escuro", theme_light: "☁️ Claro", searching: "Buscando periféricos...", empty_connected: "Nenhum periférico conectado.",
-    empty_off: "Nenhum periférico desconectado.", error_backend: "Erro: Verifique se o backend está rodando!",
+    theme_dark: "🌙 Escuro", theme_light: "☁️ Claro", theme_cyberpunk: "🌆 Cyberpunk",
+    searching: "Sincronizando periféricos...", 
+    empty_connected: "Nenhum periférico conectado.",
+    empty_off: "Nenhum periférico desconectado.", 
+    error_backend: "Falha de Conexão",
+    error_desc: "Não foi possível se comunicar com o serviço local do Monster Hub. Verifique se o backend está em execução.",
+    btn_retry: "Tentar Novamente",
     cable: "Cabo", no_battery: "Sem bateria", last_seen: "Última conexão:", new_badge: "NOVO"
   },
   en: {
     nav_connected: "CONNECTED", nav_off: "OFF",
     settings_title: "Settings", language_label: "Language", theme_label: "Theme",
-    theme_dark: "🌙 Dark", theme_light: "☁️ Light", searching: "Searching for peripherals...", empty_connected: "No peripherals connected.",
-    empty_off: "No peripherals disconnected.", error_backend: "Error: Check if the backend is running!",
+    theme_dark: "🌙 Dark", theme_light: "☁️ Light", theme_cyberpunk: "🌆 Cyberpunk",
+    searching: "Synchronizing peripherals...", 
+    empty_connected: "No peripherals connected.",
+    empty_off: "No peripherals disconnected.", 
+    error_backend: "Connection Failed",
+    error_desc: "Could not communicate with the Monster Hub local service. Please check if the backend is running.",
+    btn_retry: "Try Again",
     cable: "Cable", no_battery: "No battery", last_seen: "Last connection:", new_badge: "NEW"
   }
 };
@@ -149,6 +159,7 @@ function renderCard(p) {
 
 async function load(silencioso = false) {
   const btnRefresh = document.getElementById("refresh");
+  const navDropdown = document.querySelector(".nav-dropdown");
 
   if (carregando) {
     if (!silencioso) btnRefresh.classList.add("girando");
@@ -156,15 +167,23 @@ async function load(silencioso = false) {
   }
 
   carregando = true;
-  let tempoInicio = 0; // 👈 Novo marcador de tempo
-
+  let tempoInicio = 0;
+  let backendFalhou = false; 
   const grid = document.getElementById("grid");
   
   if (!silencioso) {
     btnRefresh.classList.add("girando");
-    tempoInicio = Date.now(); // 👈 Marca a hora que começou a girar
+    tempoInicio = Date.now(); 
+    
     if (listaCompleta.length === 0) {
-      grid.innerHTML = `<p class="status-msg" style="color:var(--text-muted)">${translations[currentLang].searching}</p>`;
+      btnRefresh.classList.add("invisible"); 
+      navDropdown.classList.add("invisible"); 
+      
+      grid.innerHTML = `
+        <div class="status-container">
+          <div class="loader-spinner"></div>
+          <p>${translations[currentLang].searching}</p>
+        </div>`;
     }
   }
   
@@ -174,24 +193,49 @@ async function load(silencioso = false) {
     renderizar();
   } catch (e) {
     console.error(e);
+    backendFalhou = true; 
     if (!silencioso) {
-      grid.innerHTML = `<p class="status-msg" style="color:#e74c3c">${translations[currentLang].error_backend}</p>`;
+      // 👇 1. Esconde os botões do topo quando der erro
+      btnRefresh.classList.add("invisible");
+      navDropdown.classList.add("invisible");
+      
+      grid.innerHTML = `
+        <div class="status-container error-state">
+          <span class="error-icon">&#xE783;</span> 
+          <h2>${translations[currentLang].error_backend}</h2>
+          <p>${translations[currentLang].error_desc}</p>
+          <button id="btn-retry" class="retry-btn">${translations[currentLang].btn_retry}</button>
+        </div>`;
+      
+      document.getElementById("btn-retry")?.addEventListener("click", () => {
+        listaCompleta = []; 
+        
+        // 👇 2. Força a tela de pesquisa a aparecer IMEDIATAMENTE ao clicar
+        const grid = document.getElementById("grid");
+        grid.innerHTML = `
+          <div class="status-container">
+            <div class="loader-spinner"></div>
+            <p>${translations[currentLang].searching}</p>
+          </div>`;
+          
+        load();
+      });
     }
   } finally {
     carregando = false;
     
     if (!silencioso) {
-      // 👇 A MÁGICA ACONTECE AQUI 👇
-      // Calcula quanto tempo se passou e quanto falta para completar 1 volta (1000ms)
       const tempoDecorrido = Date.now() - tempoInicio;
       const tempoRestante = 1000 - (tempoDecorrido % 1000); 
-      
-      // Espera o tempo restante antes de tirar a classe .girando
-      setTimeout(() => {
-        btnRefresh.classList.remove("girando");
-      }, tempoRestante);
+      setTimeout(() => btnRefresh.classList.remove("girando"), tempoRestante);
     } else {
       btnRefresh.classList.remove("girando");
+    }
+    
+    // 👇 3. Só traz o botão de atualizar e o CONECTADOS de volta se NÃO deu erro
+    if (!backendFalhou) {
+      btnRefresh.classList.remove("invisible"); 
+      navDropdown.classList.remove("invisible");
     }
     
     if (!appReadyEnviado) {
@@ -206,7 +250,7 @@ function renderizar() {
   const grid = document.getElementById("grid");
   
   // 👇 A MÁGICA: Remove QUALQUER mensagem de status (Buscando, Vazio, Erro)
-  grid.querySelectorAll('.status-msg').forEach(el => el.remove());
+  grid.querySelectorAll('.status-msg, .status-container').forEach(el => el.remove());
 
   const itensParaMostrar = currentView === "connected" 
     ? listaCompleta.filter(p => p.connected)

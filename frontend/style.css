@@ -33,6 +33,9 @@ body { background: var(--bg-body); color: var(--text-main); overflow: hidden; di
 }
 .win-btn { width: 46px; height: 100%; font-size: 10px; }
 .icon-btn { width: 40px; height: 100%; font-size: 14px; }
+/* Adicione esta regra no seu style.css (ou substitua a antiga .icon-btn.invisible) */
+.invisible { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s ease;
+}
 .win-btn:hover, .icon-btn:hover { background: var(--hover); }
 .win-btn.close:hover { background: var(--close-hover); color: white; }
 .divider { width: 1px; background: var(--border-color); margin: 8px 0; }
@@ -40,7 +43,7 @@ body { background: var(--bg-body); color: var(--text-main); overflow: hidden; di
 /* --- NAVEGAÇÃO SUSPENSA --- */
 .app-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
 header { margin-bottom: 20px; display: flex; align-items: center; }
-.nav-dropdown { position: relative; display: inline-block; padding-bottom: 10px; }
+.nav-dropdown { position: relative; display: inline-block; padding-bottom: 10px; transition: opacity 0.3s ease; }
 .nav-active { font-size: 24px; font-weight: 600; color: var(--text-main); cursor: default; letter-spacing: -0.5px; }
 .nav-dropdown-content {
   display: none; position: absolute; top: 100%; left: 0;
@@ -129,4 +132,89 @@ header { margin-bottom: 20px; display: flex; align-items: center; }
 /* Remove as regras antigas que aplicavam o transform no botão inteiro */
 #refresh.girando {
   pointer-events: none; /* Mantém isso para não clicar várias vezes */
+}
+
+/* --- TELAS DE STATUS (Carregando e Erro) --- */
+.status-container {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  /* 👇 Em vez de min-height, vamos usar height baseada na tela */
+  height: 60vh; /* 60% da altura da tela deixa o conteúdo bem no meio */
+  gap: 16px; 
+  text-align: center;
+  color: var(--text-muted);
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Spinner do Carregamento */
+.loader-spinner {
+  width: 40px; /* Aumentei um pouquinho o tamanho */
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.status-container p {
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Estado de Erro */
+.error-state {
+  color: var(--text-main);
+}
+
+.error-state .error-icon {
+  font-size: 56px; /* Ícone maior para dar destaque */
+  font-family: 'Segoe Fluent Icons', 'Segoe MDL2 Assets', sans-serif;
+  color: #ff4757; /* Vermelho mais vibrante */
+  margin: 0;
+}
+
+.error-state h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.error-state p {
+  color: var(--text-muted);
+  font-size: 14px;
+  max-width: 450px; /* Impede que o texto fique muito largo e difícil de ler */
+  line-height: 1.5; /* Melhora a leitura do texto longo */
+  margin: 0;
+}
+
+.retry-btn {
+  margin-top: 8px; /* Dá uma afastada extra do texto para o botão */
+  background: var(--bg-btn);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  padding: 10px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.retry-btn:hover {
+  background: var(--hover);
+  transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

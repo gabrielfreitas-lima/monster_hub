@@ -48,6 +48,7 @@
     "master_id": "GAMEPAD_3537_100B",
     "mode": "dongle",
     "category": "controle",
-    "battery_driver": "gamesir"
+    "battery_driver": "gamesir",
+    "offline_on_timeout": true
   }
 }

@@ -13,7 +13,7 @@ from bt_detector import get_bt_devices
 from hid_battery import get_wireless_devices
 from gamepad_detector import get_gamepads, KNOWN_GAMEPADS
 
-app = FastAPI(title="MONSTER HUB API", version="0.1.3")
+app = FastAPI(title="MONSTER HUB API", version="0.1.4")
 
 app.add_middleware(
     CORSMiddleware,

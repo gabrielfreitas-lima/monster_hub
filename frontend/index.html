@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>MONSTER HUB</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="themes.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   
@@ -14,8 +15,8 @@
     </div>
     <div class="titlebar-controls">
       <!-- Passo 4: Ícone de atualizar minimalista -->
-      <button id="refresh" class="icon-btn" title="Atualizar">&#xE72C;</button>
-      <button id="btn-settings" class="icon-btn" title="Configurações">⚙️</button>
+      <button id="refresh" class="icon-btn" title="Atualizar"><span class="icon-inner">&#xE72C;</span></button>
+      <button id="btn-settings" class="icon-btn" title="Configurações">&#xE713;</button>
       <div class="divider"></div>
       <button id="btn-minimize" class="win-btn">&#xE921;</button>
       <button id="btn-maximize" class="win-btn">&#xE922;</button>
@@ -40,8 +41,8 @@
       <!-- Passo 2 e 3: Seletor com os 3 temas -->
       <select id="theme-select">
         <option value="dark" data-i18n="theme_dark">🌙 Escuro</option>
-        <option value="light" data-i18n="theme_light">☁️ Claro (Cinza)</option>
-        <option value="cream" data-i18n="theme_cream">🍦 Creme e Roxo</option>
+        <option value="light" data-i18n="theme_light">☁️ Claro</option>
+        <option value="cyberpunk" data-i18n="theme_cyberpunk">🌆 Cyberpunk</option>
       </select>
     </div>
   </div>

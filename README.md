@@ -2,23 +2,23 @@
 
 [![Versão Pré-Alpha](https://img.shields.io/github/v/release/gabrielfreitas-lima/monster_hub?include_prereleases&style=for-the-badge&label=Baixar%20Versão)](https://github.com/gabrielfreitas-lima/monster_hub/releases)
 
-```markdown
-> **Status do Projeto:** 🚧 **v0.1.3 (Pré-Alpha)** 🚧
-> Esta é a terceira versão do aplicativo. O foco continua sendo o mapeamento e suporte dos periféricos utilizados pelo autor (Darmoshark M3, AULA F75, MCHOSE V9 PRO, JBL TUNE520BT e GameSir Cyclone 2). Novos dispositivos serão adicionados nas próximas atualizações.
+
+> **Status do Projeto:** 🚧 **v0.1.4 (Pré-Alpha)** 🚧
+> Esta é a quarta versão do aplicativo. O foco continua sendo o mapeamento e suporte dos periféricos utilizados pelo autor (Darmoshark M3, AULA F75, MCHOSE V9 PRO, JBL TUNE520BT e GameSir Cyclone 2). Novos dispositivos serão adicionados nas próximas atualizações.
 
 Um aplicativo desktop minimalista para monitorar a conexão e a bateria de periféricos (USB, Bluetooth e Wireless 2.4GHz) no Windows.
 
 ## ✨ Funcionalidades Atuais
 *   **Detecção automática** de mouses, teclados, fones, controles e caixas de som.
 *   **Leitura de bateria híbrida:** 
-    *   Via HID para dispositivos Wireless 2.4GHz (ex: MCHOSE e GameSir Cyclone 2).
+    *   Via HID raw para dispositivos Wireless 2.4GHz (ex: MCHOSE e GameSir Cyclone 2).
     *   Via PnP do Windows para dispositivos Bluetooth (ex: JBL TUNE520BT).
 *   **Agrupamento Inteligente (Master ID):** Une múltiplas interfaces do mesmo hardware (ex: controle com cabo, dongle e Bluetooth ao mesmo tempo) em um único cartão visual.
 *   **Sistema Anti-Fantasma (V3):** O backend cruza as informações do banco de dados e do histórico para garantir que dispositivos desligados (mas com dongle ativo) apareçam corretamente na tela, sem conexões falsas (ex: "Cabo" em um controle Wireless).
 *   **Diferenciação de modo (Cabo vs Wireless)** para dispositivos que expõem diferentes VID/PIDs (ex: Teclado AULA F75 e GameSir).
-*   **Histórico de conexão** com selo "NOVO" (2 minutos) e data da última conexão.
-*   **Interface minimalista** com 3 temas (Escuro, Claro e Creme/Roxo) e 2 idiomas (PT/EN).
-*   **Atualização automática** a cada 5 segundos, troca de abas instantânea e animação de refresh.
+*   **Splash Screen Temática:** Tela de carregamento com animação, cantos arredondados e que se adapta automaticamente ao tema escolhido pelo usuário.
+*   **Interface minimalista e polida:** 4 temas (Escuro, Claro, Creme/Roxo e Cyberpunk Neon) gerenciados por arquivo CSS separado, e 2 idiomas (PT/EN).
+*   **Animações Fluidas:** Atualização automática a cada 5 segundos com *DOM Diffing* (sem piscar a tela ou resetar o hover) e animações de refresh contínuas e suaves.
 
 ## ⚠️ Limitações Conhecidas (Escopo da Pré-Alpha)
 *   **Múltiplos Controles Idênticos:** Se dois controles GameSir iguais forem conectados simultaneamente, o app agrupará ambos em um único cartão. O suporte a múltiplos dispositivos do mesmo modelo requer o uso do Instance ID (planejado para v0.2.0).
@@ -29,7 +29,7 @@ Um aplicativo desktop minimalista para monitorar a conexão e a bateria de perif
 
 ## 🏗️ Arquitetura
 *   **Backend (Python + FastAPI):** Detectores assíncronos (`usb_detector`, `bt_detector`, `hid_battery`, `gamepad_detector`). Utiliza padrão **Strategy** para a leitura de bateria, **Master ID** para agrupar interfaces duplicadas e regras de **Fallback** no `api.py` para correção de dados.
-*   **Frontend (Electron + JS):** Renderização local com cache em memória, temas dinâmicos via CSS Variables e animações suaves.
+*   **Frontend (Electron + JS):** Renderização local com *cache* em memória, *DOM Diffing* para atualizações sem cintilação, temas dinâmicos via CSS Variables (separados em `themes.css`) e animações suaves.
 
 ---
 

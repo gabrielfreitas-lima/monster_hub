@@ -37,6 +37,7 @@ function createSplash() {
     frame: false,
     alwaysOnTop: true,
     transparent: true,
+    backgroundColor: '#00000000',
     resizable: false,
     show: false,
     webPreferences: { nodeIntegration: false }
@@ -51,7 +52,7 @@ function createMainWindow() {
     height: 700,
     frame: false, 
     show: false, 
-    title: "Peripheral Monitor",
+    title: "MONSTER HUB",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -60,7 +61,7 @@ function createMainWindow() {
   });
   mainWindow.loadFile("index.html");
   // Abre o console de desenvolvedor para você ver os erros!
-// mainWindow.webContents.openDevTools(); 
+  //mainWindow.webContents.openDevTools(); 
 }
 
 function revealApp() {

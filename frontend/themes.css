@@ -1,0 +1,151 @@
+/* --- TEMAS (Variáveis) --- */
+
+/* Tema Padrão: Escuro */
+:root {
+  --bg-body: #0a0a0a; --bg-card: #1a1a1a; --bg-btn: #2a2a2a;
+  --border-color: #333333; --text-main: #ffffff; --text-muted: #888888;
+  --accent: #ffffff; --hover: #222222; --titlebar-bg: #141414;
+  --close-hover: #e81123;
+}
+
+/* Tema Claro (Cinza) */
+body.light-mode {
+  --bg-body: #e5e5e5; --bg-card: #f5f5f5; --bg-btn: #d4d4d4;
+  --border-color: #cccccc; --text-main: #1a1a1a; --text-muted: #666666;
+  --accent: #1a1a1a; --hover: #e0e0e0; --titlebar-bg: #d8d8d8;
+  --close-hover: #e81123;
+}
+
+/* Tema Creme e Roxo (Fundo Creme, Cards e Cabeçalho Roxos) */
+body.cream-purple-mode {
+  --bg-body: #fdf6e3;       /* Fundo Creme (Página) */
+  --bg-card: #1e1b4b;       /* Card Roxo Escuro */
+  --bg-btn: #e8dcca;        /* Botões em tom creme mais escuro */
+  --border-color: #d4c5a9;  /* Bordas suaves para o fundo claro */
+  --text-main: #1e1b4b;     /* Texto principal escuro (para o fundo creme) */
+  --text-muted: #7a6e8a;    /* Texto secundário */
+  --accent: #e3a04b;        /* Laranja/Creme de destaque */
+  --hover: #f5ebd0;         /* Efeito hover no fundo creme */
+  --titlebar-bg: #1e1b4b;   /* Barra de título ROXA */
+  --close-hover: #e81123;
+}
+
+/* Tema Cyberpunk (Neon Night) */
+body.cyberpunk-mode {
+  --bg-body: #0d0f17;       /* Quase preto azulado */
+  --bg-card: #1c202b;       /* Cinza chumbo */
+  --text-main: #e2e8f0;     /* Branco gelo */
+  --text-muted: #8b9bb4;    /* Cinza azulado */
+  --border-color: #2a3245;  /* Borda sutil */
+  --accent: #00f0ff;        /* Ciano Neon */
+  --hover: #2a3245;         /* Hover para botões */
+  --titlebar-bg: #070910;   /* Barra superior mais escura */
+  --close-hover: #ff003c;   /* Fechar com rosa choque */
+}
+
+/* --- Regras Específicas: Creme e Roxo --- */
+
+body.cream-purple-mode .app-title,
+body.cream-purple-mode .win-btn,
+body.cream-purple-mode .icon-btn {
+  color: #fdf6e3; /* Força o texto do topo a ser creme */
+}
+body.cream-purple-mode .win-btn:hover,
+body.cream-purple-mode .icon-btn:hover {
+  background: #2d2a5e; /* Hover do topo mais escuro */
+}
+body.cream-purple-mode .divider {
+  background: #2d2a5e;
+}
+body.cream-purple-mode .card {
+  color: #fdf6e3;           /* Texto dos cartões em creme */
+  border-color: #2d2a5e;    /* Borda do cartão mais escura */
+}
+body.cream-purple-mode .card-details {
+  color: #a5a1c9;           /* Detalhes dos cartões */
+}
+body.cream-purple-mode .settings-menu,
+body.cream-purple-mode .nav-dropdown-content {
+  background: #1e1b4b;
+  border-color: #2d2a5e;
+  color: #fdf6e3;
+}
+body.cream-purple-mode .settings-menu h3 {
+  border-bottom-color: #2d2a5e;
+}
+body.cream-purple-mode .settings-menu select {
+  background: #2d2a5e;
+  color: #fdf6e3;
+  border-color: #3b3875;
+}
+body.cream-purple-mode .nav-option {
+  color: #a5a1c9;
+}
+body.cream-purple-mode .nav-option:hover {
+  background: #2d2a5e;
+  color: #fdf6e3;
+}
+body.cream-purple-mode .badge-novo {
+  color: #1e1b4b;
+}
+body.cream-purple-mode::-webkit-scrollbar-track {
+  background: #fdf6e3;
+}
+body.cream-purple-mode::-webkit-scrollbar-thumb {
+  background: #d4c5a9;
+}
+
+/* --- Regras Específicas: Cyberpunk --- */
+
+body.cyberpunk-mode .app-title {
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+  letter-spacing: 1.5px;
+}
+body.cyberpunk-mode .win-btn, 
+body.cyberpunk-mode .icon-btn {
+  color: #00f0ff;
+}
+body.cyberpunk-mode .win-btn:hover, 
+body.cyberpunk-mode .icon-btn:hover {
+  background: #1c202b;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+}
+body.cyberpunk-mode .divider {
+  background: #00f0ff;
+  opacity: 0.3;
+}
+body.cyberpunk-mode .card:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+}
+body.cyberpunk-mode #refresh .icon-inner {
+  color: #00f0ff;
+}
+body.cyberpunk-mode .badge-novo {
+  background: #ff003c;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 0, 60, 0.6);
+}
+body.cyberpunk-mode .settings-menu,
+body.cyberpunk-mode .nav-dropdown-content {
+  background: #151924;
+  border-color: #00f0ff;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+body.cyberpunk-mode .nav-option:hover,
+body.cyberpunk-mode .settings-menu select {
+  background: #2a3245;
+  color: #00f0ff;
+}
+
+/* Opções do Select (Dropdowns) para o Cyberpunk */
+body.cyberpunk-mode .setting-item select option {
+  background-color: #151924;
+  color: #00f0ff;
+}
+body.cyberpunk-mode .setting-item select option:checked {
+  background-color: #2a3245; 
+  color: #ffffff;
+}

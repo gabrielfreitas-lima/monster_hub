@@ -6,16 +6,14 @@ const translations = {
   pt: {
     nav_connected: "CONECTADOS", nav_off: "OFF",
     settings_title: "Configurações", language_label: "Idioma", theme_label: "Tema",
-    theme_dark: "🌙 Escuro", theme_light: "☁️ Claro (Cinza)", theme_cream: "🍦 Creme e Roxo",
-    searching: "Buscando periféricos...", empty_connected: "Nenhum periférico conectado.",
+    theme_dark: "🌙 Escuro", theme_light: "☁️ Claro", searching: "Buscando periféricos...", empty_connected: "Nenhum periférico conectado.",
     empty_off: "Nenhum periférico desconectado.", error_backend: "Erro: Verifique se o backend está rodando!",
     cable: "Cabo", no_battery: "Sem bateria", last_seen: "Última conexão:", new_badge: "NOVO"
   },
   en: {
     nav_connected: "CONNECTED", nav_off: "OFF",
     settings_title: "Settings", language_label: "Language", theme_label: "Theme",
-    theme_dark: "🌙 Dark", theme_light: "☁️ Light (Gray)", theme_cream: "🍦 Cream & Purple",
-    searching: "Searching for peripherals...", empty_connected: "No peripherals connected.",
+    theme_dark: "🌙 Dark", theme_light: "☁️ Light", searching: "Searching for peripherals...", empty_connected: "No peripherals connected.",
     empty_off: "No peripherals disconnected.", error_backend: "Error: Check if the backend is running!",
     cable: "Cable", no_battery: "No battery", last_seen: "Last connection:", new_badge: "NEW"
   }
@@ -43,6 +41,9 @@ const systemLang = navigator.language.toLowerCase().startsWith("pt") ? "pt" : "e
 const currentLang = savedLang || systemLang;
 let carregando = false;
 
+// 👇 CORREÇÃO 1: Flag para não pular a janela toda hora
+let appReadyEnviado = false; 
+
 function applyLanguage() {
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
@@ -52,9 +53,9 @@ function applyLanguage() {
 }
 
 function applyTheme(theme) {
-  document.body.classList.remove("light-mode", "cream-purple-mode");
+  document.body.classList.remove("light-mode", "cyberpunk-mode");
   if (theme === "light") document.body.classList.add("light-mode");
-  if (theme === "cream") document.body.classList.add("cream-purple-mode");
+  if (theme === "cyberpunk") document.body.classList.add("cyberpunk-mode");
   document.getElementById("theme-select").value = theme;
 }
 
@@ -93,11 +94,8 @@ function renderCard(p) {
   const nomeLower = (p.name || "").toLowerCase();
   const isDarmoshark = nomeLower.includes("darmoshark");
   
-  // Caixas de Som FIXAS: Alexa, Echo, Soundbar (NÃO fones JBL)
   const palavrasCaixaFixa = ["echo", "alexa", "speaker", "soundbar", "homepod", "boombox"];
   const isCaixaDeSomFixa = palavrasCaixaFixa.some(w => nomeLower.includes(w));
-
-  // REGRA DE OURO PARA O JBL: Nunca esconder a bateria de um JBL
   const isJBL = nomeLower.includes("jbl");
 
   const esconderBateria = isDarmoshark || (isCaixaDeSomFixa && !isJBL);
@@ -130,8 +128,11 @@ function renderCard(p) {
     ? `<p class="ultima">${translations[currentLang].last_seen} ${fmtData(p.ultima_conexao)}</p>` 
     : "";
 
+  // 👇 CORREÇÃO 2: Adicionando ID único no cartão (remove espaços e caracteres especiais)
+  const safeId = (p.master_id || p.name || "desconhecido").replace(/[^a-zA-Z0-9]/g, "_");
+
   return `
-    <div class="card ${statusClass} ${memoriaClass}">
+    <div id="card-${safeId}" class="card ${statusClass} ${memoriaClass}">
       <div class="card-image-container">
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<div class="emoji-icon">${icon}</div>`}
       </div>
@@ -147,16 +148,23 @@ function renderCard(p) {
 }
 
 async function load(silencioso = false) {
-  if (carregando) return;
+  const btnRefresh = document.getElementById("refresh");
+
+  if (carregando) {
+    if (!silencioso) btnRefresh.classList.add("girando");
+    return;
+  }
+
   carregando = true;
+  let tempoInicio = 0; // 👈 Novo marcador de tempo
 
   const grid = document.getElementById("grid");
-  const btnRefresh = document.getElementById("refresh");
   
   if (!silencioso) {
     btnRefresh.classList.add("girando");
+    tempoInicio = Date.now(); // 👈 Marca a hora que começou a girar
     if (listaCompleta.length === 0) {
-      grid.innerHTML = `<p style="color:var(--text-muted)">${translations[currentLang].searching}</p>`;
+      grid.innerHTML = `<p class="status-msg" style="color:var(--text-muted)">${translations[currentLang].searching}</p>`;
     }
   }
   
@@ -167,28 +175,90 @@ async function load(silencioso = false) {
   } catch (e) {
     console.error(e);
     if (!silencioso) {
-      grid.innerHTML = `<p style="color:#e74c3c">${translations[currentLang].error_backend}</p>`;
+      grid.innerHTML = `<p class="status-msg" style="color:#e74c3c">${translations[currentLang].error_backend}</p>`;
     }
   } finally {
     carregando = false;
-    btnRefresh.classList.remove("girando");
-    if (window.api && window.api.appReady) window.api.appReady();
+    
+    if (!silencioso) {
+      // 👇 A MÁGICA ACONTECE AQUI 👇
+      // Calcula quanto tempo se passou e quanto falta para completar 1 volta (1000ms)
+      const tempoDecorrido = Date.now() - tempoInicio;
+      const tempoRestante = 1000 - (tempoDecorrido % 1000); 
+      
+      // Espera o tempo restante antes de tirar a classe .girando
+      setTimeout(() => {
+        btnRefresh.classList.remove("girando");
+      }, tempoRestante);
+    } else {
+      btnRefresh.classList.remove("girando");
+    }
+    
+    if (!appReadyEnviado) {
+      appReadyEnviado = true;
+      if (window.api && window.api.appReady) window.api.appReady();
+    }
   }
 }
 
+// 👇 CORREÇÃO 2: Atualização inteligente (DOM Diffing) para não quebrar o hover
 function renderizar() {
   const grid = document.getElementById("grid");
   
+  // 👇 A MÁGICA: Remove QUALQUER mensagem de status (Buscando, Vazio, Erro)
+  grid.querySelectorAll('.status-msg').forEach(el => el.remove());
+
   const itensParaMostrar = currentView === "connected" 
     ? listaCompleta.filter(p => p.connected)
     : listaCompleta.filter(p => !p.connected);
 
-  if (itensParaMostrar.length > 0) {
-    grid.innerHTML = itensParaMostrar.map(renderCard).join("");
-  } else {
+  // Se não houver itens para mostrar, exibe a mensagem de vazio
+  if (itensParaMostrar.length === 0) {
     const msg = currentView === "connected" ? translations[currentLang].empty_connected : translations[currentLang].empty_off;
-    grid.innerHTML = `<p class="empty-msg">${msg}</p>`;
+    grid.innerHTML = `<p class="status-msg empty-msg">${msg}</p>`;
+    return;
   }
+
+  // Cria uma lista com os IDs que devem estar na tela
+  const idsEsperados = itensParaMostrar.map(p => `card-${(p.master_id || p.name || "desconhecido").replace(/[^a-zA-Z0-9]/g, "_")}`);
+
+  // 1. Remove os cartões que não existem mais
+  Array.from(grid.children).forEach(child => {
+    if (child.id && child.id.startsWith('card-') && !idsEsperados.includes(child.id)) {
+      child.remove();
+    }
+  });
+
+  // 2. Atualiza os que já existem e cria os novos
+  itensParaMostrar.forEach((p, index) => {
+    const safeId = `card-${(p.master_id || p.name || "desconhecido").replace(/[^a-zA-Z0-9]/g, "_")}`;
+    const novoHtmlString = renderCard(p);
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = novoHtmlString.trim();
+    const novoElemento = tempDiv.firstElementChild;
+
+    const cardExistente = document.getElementById(safeId);
+
+    if (cardExistente) {
+      // Se o cartão já existe, atualiza apenas o conteúdo interno (preserva o hover)
+      if (cardExistente.innerHTML !== novoElemento.innerHTML) {
+        cardExistente.innerHTML = novoElemento.innerHTML;
+      }
+      if (cardExistente.className !== novoElemento.className) {
+        cardExistente.className = novoElemento.className;
+      }
+      
+      const childAtIndex = grid.children[index];
+      if (childAtIndex !== cardExistente) {
+        grid.insertBefore(cardExistente, childAtIndex || null);
+      }
+    } else {
+      // Se é um cartão novo, insere na posição correta
+      const childAtIndex = grid.children[index] || null;
+      grid.insertBefore(novoElemento, childAtIndex);
+    }
+  });
 }
 
 document.getElementById("language-select").addEventListener("change", (e) => {

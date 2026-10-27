@@ -2,8 +2,57 @@ const { app, BrowserWindow, ipcMain, Menu } = require("electron");
 const path = require("path");
 const { spawn, exec } = require("child_process");
 const fs = require("fs");
+const koffi = require('koffi');
 
-app.disableHardwareAcceleration();
+// Carrega a biblioteca nativa do Windows (DWM)
+const dwmapi = koffi.load('dwmapi.dll');
+const DwmSetWindowAttribute = dwmapi.func('int __stdcall DwmSetWindowAttribute(void* hwnd, int dwAttribute, void* pvAttribute, int cbAttribute)');
+
+// Constantes do Windows para decoração de janela
+const DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+const DWMWCP_DONOTROUND = 1; // Não arredondar
+const DWMWCP_ROUND = 2;      // Arredondar (padrão do Win11)
+
+const DWMWA_NCRENDERING_POLICY = 2;
+const DWMNCRP_DISABLED = 2;  // Desativa a renderização de bordas do sistema
+const DWMNCRP_ENABLED = 1;   // Ativa (padrão)
+
+// Função auxiliar para pegar o "Handle" (ID) da janela no Windows
+function getHwnd(win) {
+  const buffer = win.getNativeWindowHandle();
+  return buffer.readBigUInt64LE(0); // Lê o endereço de 64 bits
+}
+
+// Função que altera a decoração da janela no Windows
+function setWindowsDecorations(win, isMaximized) {
+  const hwnd = getHwnd(win);
+  
+  // Buffers para os valores
+  const cornerPref = Buffer.alloc(4);
+  const ncPolicy = Buffer.alloc(4);
+  const borderColor = Buffer.alloc(4);
+
+  if (isMaximized) {
+    // Quando maximizado: remove cantos, desativa renderização da moldura e ZERA a cor da borda
+    cornerPref.writeInt32LE(DWMWCP_DONOTROUND);
+    ncPolicy.writeInt32LE(DWMNCRP_DISABLED);
+    borderColor.writeUInt32LE(0xFFFFFFFE); // 👈 DWMWA_COLOR_NONE
+  } else {
+    // Quando em janela: restaura cantos, moldura e cor padrão da borda
+    cornerPref.writeInt32LE(DWMWCP_ROUND);
+    ncPolicy.writeInt32LE(DWMNCRP_ENABLED);
+    borderColor.writeUInt32LE(0xFFFFFFFF); // Cor padrão (ou a cor que preferir)
+  }
+
+  // Aplica as regras no Windows
+  DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, cornerPref, 4);
+  DwmSetWindowAttribute(hwnd, DWMWA_NCRENDERING_POLICY, ncPolicy, 4);
+  
+  // 👇 A NOVA CHAMADA: Remove a linha de 1px
+  DwmSetWindowAttribute(hwnd, 34, borderColor, 4); // 34 = DWMWA_BORDER_COLOR
+}
+
+// app.disableHardwareAcceleration();
 let backendProcess = null;
 let mainWindow = null;
 let splashWindow = null;
@@ -99,10 +148,39 @@ ipcMain.on("app-ready", () => {
 });
 
 ipcMain.on("window-minimize", () => mainWindow.minimize());
+// Variável para guardar o tamanho da janela antes de maximizar
+let tamanhoAnterior = { width: 1100, height: 700 };
+
 ipcMain.on("window-maximize", () => {
-  if (mainWindow.isMaximized()) mainWindow.unmaximize();
-  else mainWindow.maximize();
+  const { screen } = require('electron');
+  const display = screen.getDisplayMatching(mainWindow.getBounds());
+  const workArea = display.workArea; 
+  const bounds = mainWindow.getBounds();
+
+  const estaMaximizada = bounds.width >= workArea.width && bounds.height >= workArea.height;
+
+  if (estaMaximizada) {
+    // RESTAURAR
+    mainWindow.setBounds({ x: 100, y: 100, width: 1100, height: 700 });
+    mainWindow.setResizable(true);
+    
+    // 👇 Avisa o Windows para voltar a arredondar os cantos
+    setWindowsDecorations(mainWindow, false);
+  } else {
+    // MAXIMIZAR
+    mainWindow.setBounds({ 
+      x: workArea.x, 
+      y: workArea.y, 
+      width: workArea.width, 
+      height: workArea.height 
+    });
+    mainWindow.setResizable(false);
+    
+    // 👇 Avisa o Windows para NÃO arredondar e NÃO desenhar borda
+    setWindowsDecorations(mainWindow, true);
+  }
 });
+
 ipcMain.on("window-close", () => mainWindow.close());
 
 app.whenReady().then(() => {

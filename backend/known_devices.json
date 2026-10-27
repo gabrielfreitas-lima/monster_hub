@@ -18,21 +18,21 @@
   "3554_FA09": {
     "master_id": "DARMOSHARK",
     "mode": "dongle",
-    "name": "Mouse Darmoshark",
+    "name": "Darmoshark",
     "category": "mouse",
     "manufacturer": "Darmoshark"
   },
   "248A_FF30": {
     "master_id": "AULA_F75",
     "mode": "dongle",
-    "name": "Teclado AULA F75",
+    "name": "AULA F75",
     "category": "teclado",
     "manufacturer": "AULA"
   },
   "258A_010C": {
     "master_id": "AULA_F75",
     "mode": "cabo",
-    "name": "Teclado AULA F75",
+    "name": "AULA F75",
     "category": "teclado",
     "manufacturer": "AULA"
   },

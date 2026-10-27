@@ -218,3 +218,29 @@ header { margin-bottom: 20px; display: flex; align-items: center; }
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+#maximize-icon {
+  font-family: 'Segoe Fluent Icons', 'Segoe MDL2 Assets', sans-serif;
+  display: inline-block;
+}
+
+/* Quando a janela estiver maximizada, remove as bordas e cantos arredondados */
+body.is-maximized {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* Bônus: Remove o fundo transparente para não vazar a área de trabalho nos cantos */
+body.is-maximized {
+  background-color: var(--bg-body); 
+}
+
+/* Animação de fade suave para esconder a troca de tamanho da janela */
+body {
+  transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
+
+body.window-transitioning {
+  opacity: 0;
+  transform: scale(0.98); /* Dá um leve encolhimento para dar profundidade */
+}

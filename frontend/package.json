@@ -11,7 +11,8 @@
     "electron-builder": "^25.1.8"
   },
   "allowScripts": {
-    "electron@33.4.11": true
+    "electron@33.4.11": true,
+    "koffi@3.3.4": true
   },
   "build": {
     "appId": "com.mapeamentovid.monsterhub",
@@ -36,8 +37,13 @@
       {
         "from": "../backend/dist/backend",
         "to": "backend",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ]
+  },
+  "dependencies": {
+    "koffi": "^3.3.4"
   }
 }

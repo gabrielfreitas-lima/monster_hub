@@ -316,10 +316,6 @@ document.getElementById("theme-select").addEventListener("change", (e) => {
   applyTheme(newTheme);
 });
 
-document.getElementById("btn-minimize").addEventListener("click", () => window.api.minimize());
-document.getElementById("btn-maximize").addEventListener("click", () => window.api.maximize());
-document.getElementById("btn-close").addEventListener("click", () => window.api.close());
-
 const settingsBtn = document.getElementById("btn-settings");
 const settingsMenu = document.getElementById("settings-menu");
 settingsBtn.addEventListener("click", (e) => {
@@ -359,6 +355,47 @@ applyTheme(localStorage.getItem("theme") || "dark");
 applyLanguage();
 load();
 
+// ==========================================
+// CONTROLES DA JANELA (Unificados e sem duplicação)
+// ==========================================
+document.getElementById("btn-minimize").addEventListener("click", () => window.api.minimize());
+// 👇 O NOVO CLIQUE DO MAXIMIZAR (Com Fade Suave) 👇
+document.getElementById("btn-maximize").addEventListener("click", () => {
+  // 1. Esmaece a tela (fade-out)
+  document.body.classList.add("window-transitioning");
+  
+  // 2. Espera 150ms (tempo da transição do CSS) e muda o tamanho da janela
+  setTimeout(() => {
+    window.api.maximize();
+    
+    // 3. Espera mais 50ms e traz a tela de volta (fade-in)
+    setTimeout(() => {
+      document.body.classList.remove("window-transitioning");
+    }, 50);
+  }, 150);
+});
+document.getElementById("btn-close").addEventListener("click", () => window.api.close());
+
+// 👇 TROCA O ÍCONE BASEADO NO TAMANHO DA JANELA
+function atualizarIconeMaximizar() {
+  const maxIcon = document.getElementById("maximize-icon");
+  if (!maxIcon) return;
+
+  const isMaximized = (window.innerWidth >= screen.availWidth - 10) && (window.innerHeight >= screen.availHeight - 10);
+
+  if (isMaximized) {
+    maxIcon.innerHTML = "&#xE923;"; // Restaurar
+    document.body.classList.add("is-maximized"); // 👈 Adicione esta linha
+  } else {
+    maxIcon.innerHTML = "&#xE922;"; // Maximizar
+    document.body.classList.remove("is-maximized"); // 👈 Adicione esta linha
+  }
+}
+
+window.addEventListener('resize', atualizarIconeMaximizar);
+atualizarIconeMaximizar();
+
+// Loop de atualização
 setInterval(() => { 
   if (!document.hidden) load(true); 
 }, 5000);
